@@ -588,7 +588,8 @@ namespace FormsSweeper
         }
         public void secondPassed(object? sender, EventArgs e)
         {
-            secondsPassed++;
+            if (secondsPassed < 999)
+                secondsPassed++;
             int hundredthMines = (int)Math.Floor(secondsPassed / 100f);
             int tenthMines = (int)Math.Floor(secondsPassed / 10f) % 10;
             int onethMines = secondsPassed % 10;
@@ -693,9 +694,11 @@ namespace FormsSweeper
 
         public void refreshMineCount()
         {
-            int hundredthMines = (int)Math.Floor(bombsLeftNumberForDrawing / 100f);
-            int tenthMines = (int)Math.Floor(bombsLeftNumberForDrawing / 10f) % 10;
-            int onethMines = bombsLeftNumberForDrawing % 10;
+            int bombTemp = Math.Min(bombsLeftNumberForDrawing, 999);
+        
+            int hundredthMines = (int)Math.Floor(bombTemp / 100f);
+            int tenthMines = (int)Math.Floor(bombTemp / 10f) % 10;
+            int onethMines = bombTemp % 10;
 
             minesHundreds.Image = getNumImg(hundredthMines);
             minesTens.Image = getNumImg(tenthMines);
