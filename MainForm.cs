@@ -190,12 +190,12 @@ namespace FormsSweeper
             {
                 grid[i] = (int)MinesweeperTileState.NOT_CLICKED;
             }
-            
+  
             // more ui here
             if (refreshImages)
             {
                 // pixel measurements
-                ClientSize = new Size(w * 32 + 40, h * 32 + 126);
+                ClientSize = new Size(w * 31 + 48, h * 31 + 130);
                 // white lines on the side
                 PictureBox boxLine1 = new PictureBox();
                 boxLine1.BackColor = Color.White;
@@ -342,10 +342,38 @@ namespace FormsSweeper
             int gridNumber = grid[gridIndex];
 
             // Hold on
-            if (gridHasState(gridNumber, MinesweeperTileState.CLICKED)
-            || gridHasState(gridNumber, MinesweeperTileState.FLAGGED))
+            if (gridHasState(gridNumber, MinesweeperTileState.FLAGGED))
                 return;
 
+            if (gridHasState(gridNumber, MinesweeperTileState.CLICKED))
+            {
+                int flags = 0;
+                for (int i = 0; i < 8; i++)
+                {
+                    int[] pos = tileCheckAround(i, x, y);
+                    if (pos[0] < 0 || pos[0] >= gridWidth
+                    || pos[1] < 0 || pos[1] >= gridHeight)
+                        continue; // out of grid
+
+                    if (gridHasState(grid[getGridIndex(pos[0], pos[1])], MinesweeperTileState.FLAGGED))
+                        flags++;
+                }
+                if (flags < (gridNumber & 15))
+                    return;
+
+                for (int i = 0; i < 8; i++)
+                {
+                    int[] pos = tileCheckAround(i, x, y);
+                    if (pos[0] < 0 || pos[0] >= gridWidth
+                    || pos[1] < 0 || pos[1] >= gridHeight)
+                        continue; // out of grid
+
+                    if (!gridHasState(grid[getGridIndex(pos[0], pos[1])], MinesweeperTileState.CLICKED))
+                        clickTileCheck(pos[0], pos[1]);
+                }
+
+                return;
+            }
             if (!gridHasState(gridNumber, MinesweeperTileState.BOMB))
             {
                 clickTile(x, y);
@@ -383,6 +411,27 @@ namespace FormsSweeper
             timer.Stop();
         }
 
+        public int[] tileCheckAround(int checkAroundID, int x, int y)
+        {
+            int newGridX = x;
+            int newGridY = y;
+            switch (checkAroundID)
+            {
+                case 7: newGridY--; break;             // north
+                case 3: newGridY++; break;             // south
+
+                case 1: newGridX--; break;             // west
+                case 5: newGridX++; break;             // east
+
+                case 0: newGridX--; newGridY--; break; // northwest
+                case 6: newGridX++; newGridY--; break; // northeast
+
+                case 2: newGridX--; newGridY++; break; // southwest
+                case 4: newGridX++; newGridY++; break; // southeast
+            }
+            return [newGridX, newGridY];
+        }
+
         public List<int[]>? clickTile(int x, int y, bool looping = false)
         {
             int gridIndex = getGridIndex(x, y);
@@ -401,31 +450,16 @@ namespace FormsSweeper
 
             // Firstly. Die, this code looks bad
             // "i hate this so much" original comment
-            for (int tileCheckAroundID = 0; tileCheckAroundID < 8; tileCheckAroundID++)
+            for (int i = 0; i < 8; i++)
             {
-                int newGridX = x;
-                int newGridY = y;
-                switch (tileCheckAroundID)
-                {
-                    case 7: newGridY--; break;             // north
-                    case 3: newGridY++; break;             // south
+                int[] newGridPos = tileCheckAround(i, x, y);
 
-                    case 1: newGridX--; break;             // west
-                    case 5: newGridX++; break;             // east
-
-                    case 0: newGridX--; newGridY--; break; // northwest
-                    case 6: newGridX++; newGridY--; break; // northeast
-
-                    case 2: newGridX--; newGridY++; break; // southwest
-                    case 4: newGridX++; newGridY++; break; // southeast
-                }
-
-                if (newGridX < 0 || newGridX >= gridWidth
-                || newGridY < 0 || newGridY >= gridHeight)
+                if (newGridPos[0] < 0 || newGridPos[0] >= gridWidth
+                || newGridPos[1] < 0 || newGridPos[1] >= gridHeight)
                     continue; // out of grid
 
                 // if has bomb then there are bombs around
-                if (gridHasState(grid[getGridIndex(newGridX, newGridY)], MinesweeperTileState.BOMB))
+                if (gridHasState(grid[getGridIndex(newGridPos[0], newGridPos[1])], MinesweeperTileState.BOMB))
                     numberOfBombsAround++;
             }
 
